@@ -10,7 +10,6 @@ warnings.filterwarnings("ignore")
 
 app = FastAPI()
 
-# Rutas exactas para los nombres de tus archivos .pkl
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 MODEL_PATH = os.path.join(BASE_DIR, 'Heart_model.pkl')
 SCALER_PATH = os.path.join(BASE_DIR, 'Heart_scaler.pkl')
@@ -34,13 +33,11 @@ class PacienteData(BaseModel):
     Oldpeak: float
     ST_Slope: int
 
-# Ruta para mostrar el HTML en tu servidor local
 @app.get("/")
 def mostrar_pagina():
     ruta_html = os.path.join(os.path.dirname(BASE_DIR), 'index.html')
     return FileResponse(ruta_html)
 
-# Ruta para la API de predicción (la que usará Vercel)
 @app.post("/api/predecir")
 def predecir_riesgo(datos: PacienteData):
     nombres_columnas = ["Age", "Sex", "ChestPainType", "RestingBP", "Cholesterol", "FastingBS", "RestingECG", "MaxHR", "ExerciseAngina", "Oldpeak", "ST_Slope"]
@@ -50,23 +47,28 @@ def predecir_riesgo(datos: PacienteData):
         datos.MaxHR, datos.ExerciseAngina, datos.Oldpeak, datos.ST_Slope
     ]], columns=nombres_columnas)
 
-    # Escalar solo las 5 columnas numéricas
     columnas_numericas = ["Age", "RestingBP", "Cholesterol", "MaxHR", "Oldpeak"]
     datos_df[columnas_numericas] = escalador.transform(datos_df[columnas_numericas])
 
-    # Predecir probabilidad
     probabilidades = modelo.predict_proba(datos_df)
     probabilidad_enfermedad = round(probabilidades[0][1] * 100, 1)
 
-    # Lógica de recomendación
-    if probabilidad_enfermedad < 30:
-        recomendacion = "Riesgo Bajo. Mantenga un estilo de vida saludable."
-    elif probabilidad_enfermedad < 65:
-        recomendacion = "Riesgo Moderado. Se recomienda programar un chequeo médico de rutina."
+    # NUEVA LÓGICA DE 4 NIVELES Y DIAGNÓSTICOS CLÍNICOS
+    if probabilidad_enfermedad <= 25:
+        nivel = "Riesgo Mínimo"
+        recomendacion = "Mantenga su rutina actual. Se aconseja continuar con una dieta baja en sodio, realizar al menos 150 minutos de actividad física cardiovascular por semana y programar sus chequeos preventivos anuales estándar."
+    elif probabilidad_enfermedad <= 50:
+        nivel = "Riesgo Leve a Moderado"
+        recomendacion = "Se sugiere reducir la ingesta de grasas saturadas y azúcares refinados. Incorpore ejercicio aeróbico de intensidad moderada sin picos de esfuerzo. Vigile su presión arterial mensualmente y considere solicitar un perfil lipídico completo en su próxima revisión."
+    elif probabilidad_enfermedad <= 75:
+        nivel = "Riesgo Elevado"
+        recomendacion = "Es fundamental implementar cambios inmediatos: limite el consumo de sodio a menos de 2,000 mg diarios, evite el esfuerzo físico extenuante o de alto impacto sin supervisión. Se recomienda programar un electrocardiograma (ECG) de esfuerzo y una consulta de valoración a corto plazo."
     else:
-        recomendacion = "Riesgo Alto. Por favor, consulte a un cardiólogo a la brevedad."
+        nivel = "Riesgo Crítico"
+        recomendacion = "Requiere evaluación cardiológica prioritaria. Suspenda temporalmente actividades físicas de alto impacto. Adopte una dieta estricta cardioprotectora (tipo DASH) y establezca un monitoreo diario de su presión arterial y frecuencia cardíaca en reposo hasta ser evaluado por un especialista."
 
     return {
         "probabilidad": probabilidad_enfermedad,
+        "nivel": nivel,
         "recomendacion": recomendacion
     }
