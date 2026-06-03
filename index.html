@@ -68,7 +68,6 @@
             opacity: 1;
             transform: translateY(0);
         }
-        /* Spinner de carga */
         .spinner-border {
             width: 1.5rem;
             height: 1.5rem;
@@ -141,12 +140,12 @@
                                 </select>
                             </div>
                             <div class="col-md-6">
-                                <label class="form-label">Frecuencia Cardíaca Máxima Alcanzada</label>
+                                <label class="form-label">Frecuencia Cardíaca Máxima</label>
                                 <input type="number" class="form-control" id="MaxHR" placeholder="Ej. 150" required min="60" max="220">
                             </div>
 
                             <div class="col-md-4">
-                                <label class="form-label">Angina Inducida por Ejercicio</label>
+                                <label class="form-label">Angina por Ejercicio</label>
                                 <select class="form-select" id="ExerciseAngina" required>
                                     <option value="" disabled selected>Seleccione...</option>
                                     <option value="1">Sí</option>
@@ -196,7 +195,6 @@
 document.getElementById('heartForm').addEventListener('submit', async function(e) {
     e.preventDefault(); 
 
-    // Elementos de la interfaz
     const submitBtn = document.getElementById('submitBtn');
     const btnText = document.getElementById('btnText');
     const spinner = document.getElementById('loadingSpinner');
@@ -204,15 +202,12 @@ document.getElementById('heartForm').addEventListener('submit', async function(e
     const probText = document.getElementById('probText');
     const recomText = document.getElementById('recomText');
 
-    // Estado de carga visual
     btnText.innerText = 'Analizando datos...';
     spinner.style.display = 'block';
     submitBtn.disabled = true;
     divRes.classList.remove('show');
     
-    // Pequeño retraso para que la animación se vea fluida
     setTimeout(async () => {
-        // Recolectar datos
         const data = {
             Age: parseFloat(document.getElementById('Age').value),
             Sex: parseInt(document.getElementById('Sex').value),
@@ -228,7 +223,6 @@ document.getElementById('heartForm').addEventListener('submit', async function(e
         };
 
         try {
-            // Petición a la API (ruta ajustada para Vercel)
             const response = await fetch('/api/predecir', {
                 method: 'POST',
                 headers: {'Content-Type': 'application/json'},
@@ -239,13 +233,11 @@ document.getElementById('heartForm').addEventListener('submit', async function(e
             
             const resultado = await response.json();
 
-            // Limpiar clases de colores previas
             divRes.className = 'result-box mt-4 p-4 text-center border';
             
             probText.innerText = `Riesgo Detectado: ${resultado.probabilidad}%`;
             recomText.innerText = resultado.recomendacion;
 
-            // Asignar colores según el nivel de riesgo usando Bootstrap utilities
             if (resultado.probabilidad < 30) {
                 divRes.classList.add('bg-success', 'text-white', 'border-success', 'd-block');
             } else if (resultado.probabilidad < 65) {
@@ -254,19 +246,17 @@ document.getElementById('heartForm').addEventListener('submit', async function(e
                 divRes.classList.add('bg-danger', 'text-white', 'border-danger', 'd-block');
             }
 
-            // Activar transición CSS
             setTimeout(() => divRes.classList.add('show'), 50);
 
         } catch (error) {
             alert("Error al conectar con el servidor. Verifique la consola para más detalles.");
             console.error(error);
         } finally {
-            // Restaurar botón
             btnText.innerText = 'Procesar Diagnóstico Predictivo';
             spinner.style.display = 'none';
             submitBtn.disabled = false;
         }
-    }, 500); // 500ms de retraso artificial para la UX
+    }, 500); 
 });
 </script>
 

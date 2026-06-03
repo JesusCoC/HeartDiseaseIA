@@ -1,0 +1,8 @@
+# Ignorar el caché de Python
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Ignorar archivos ocultos del sistema operativo
+.DS_Store
+Thumbs.db
